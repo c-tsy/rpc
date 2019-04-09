@@ -1,0 +1,20 @@
+{
+  "name": "@ctsy/rpc",
+  "version": "1.0.1",
+  "main": "dist/index.js",
+  "author": "CastleMY <490523604@qq.com>",
+  "license": "MIT",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/index.js",
+    "dist/index.d.ts",
+    "README.md"
+  ],
+  "repository": {
+    "type": "github",
+    "url": "https://github.com/c-tsy/rpc"
+  },
+  "dependencies": {
+    "buffer": "^5.2.1"
+  }
+}
