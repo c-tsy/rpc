@@ -4,13 +4,9 @@ import { Buffer } from 'buffer'
  * 超时单位
  */
 export enum TimeoutUnit {
-    MicroSecend,
-    MicroSecend10,
-    MicroSecend100,
     Secend,
     Min,
     Hour,
-    Day,
 }
 /**
  * 请求类型
@@ -128,10 +124,12 @@ export default class RPC {
         b[4] = this.Timeout;
 
         //写入seqID
-        b[5] = this.ID;
+        // let b1 = Buffer.alloc(2);
+        b.writeUInt16LE(this.ID, 5);
+        // b1.copy(b, 5)
         // b[2] |= this.IsUp ? 0x80 : 0x00;
-        b[6] = this.Path.length
-        b[7] = RPC.getDataType(this.Data);
+        b[7] = this.Path.length
+        b[8] = RPC.getDataType(this.Data);
         //开始编码时间和请求类型数据
         let addr = Buffer.alloc(0);
         if (RPC.NeedAddressType.includes(this.Type)) {
@@ -212,7 +210,7 @@ export default class RPC {
         t.Status = (b[1] & 0x40) == 0x40
         t.Timeout = b[4];
         t.TimeoutUnit = b[3];
-        t.ID = b[5];
+        t.ID = b.readUInt16LE(5);
         t.Type = b[2]
         let start = 10;
         if (RPC.NeedAddressType.includes(t.Type)) {
@@ -222,8 +220,9 @@ export default class RPC {
             start += 8;
         }
         //预留3个字节不处理
-        t.Path = b.slice(start, b[6] + start).toString()
-        t.Data = RPC.decodeData(b.slice(start + b[6]), b[7]);
+        t.Path = b.slice(start, b[7] + start).toString()
+        t.Data = RPC.decodeData(b.slice(start + b[7]), b[8]);
+
         return t;
     }
 }
