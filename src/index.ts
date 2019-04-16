@@ -54,7 +54,7 @@ export function checkTopic(topic: string): string {
     throw 'ErrorTopic'
 }
 
-export default class RPC {
+export class RPC {
     /**
      * 需要地址的类型
      */
@@ -226,3 +226,4 @@ export default class RPC {
         return t;
     }
 }
+export default RPC;
