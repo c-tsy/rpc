@@ -144,7 +144,7 @@ export class RPC {
             ]);
         }
         // 需要标识数据类型用于做解码
-        let data = RPC.encodeData(this.Data, b[7]);
+        let data = RPC.encodeData(this.Data, b[8]);
         return Buffer.concat([
             Buffer.from([0x68]),
             b,
@@ -175,7 +175,7 @@ export class RPC {
             case DataType.Boolean:
                 return data ? 1 : 0;
             default:
-                return data.toString()
+                return data !== undefined ? data.toString() : ''
         }
     }
     static decodeData(data: Buffer, type: number) {
