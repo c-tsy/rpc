@@ -1,6 +1,6 @@
 {
   "name": "@ctsy/rpc",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "main": "dist/index.js",
   "author": "CastleMY <490523604@qq.com>",
   "license": "MIT",
@@ -16,5 +16,8 @@
   },
   "dependencies": {
     "buffer": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^11.13.8"
   }
 }
