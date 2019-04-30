@@ -1,5 +1,4 @@
-import { Buffer } from 'buffer'
-
+const Buffer = require('buffer').Buffer
 /**
  * 超时单位
  */
