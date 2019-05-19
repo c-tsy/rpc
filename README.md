@@ -14,3 +14,5 @@ let buffer = rpc.encode();
 //or
 let rpc = RPC.decode(buffer)
 ```
+
+## 协议设计规则

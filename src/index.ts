@@ -149,7 +149,7 @@ export class RPC {
             b,
             addr,
             Buffer.from(this.Path),
-            Buffer.isBuffer(data) ? data : Buffer.from('string' == typeof data ? data : data.toString()),
+            undefined === data ? Buffer.alloc(0) : (Buffer.isBuffer(data) ? data : Buffer.from('string' == typeof data ? data : data.toString())),
             Buffer.from([0x68]),
         ])
     }
