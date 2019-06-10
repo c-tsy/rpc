@@ -110,48 +110,104 @@ export class RPC {
         if (this.Path.length > 255 && this.Path.length == 0) {
             throw new Error('Error Path')
         }
-        //预留7个字节
-        let b = Buffer.alloc(10)
-        b[0] = this.Version;
-        b[1] |= this.NeedReply ? 0x80 : 0x00
-        b[1] |= this.Status ? 0x40 : 0x00
-        //TODO 嵌入是否包含接收方和发送方地址数据，2位
-        b[2] = this.Type;
-        //写入超时单位
-        b[3] = this.TimeoutUnit;
-        //写入超时时间
-        b[4] = this.Timeout;
-
-        //写入seqID
-        // let b1 = Buffer.alloc(2);
-        b.writeUInt16LE(this.ID, 5);
-        // b1.copy(b, 5)
-        // b[2] |= this.IsUp ? 0x80 : 0x00;
-        b[7] = this.Path.length
-        b[8] = RPC.getDataType(this.Data);
-        //开始编码时间和请求类型数据
+        let b = Buffer.alloc(12);
         let addr = Buffer.alloc(0);
-        if (RPC.NeedAddressType.includes(this.Type)) {
-            //写入16字节的地址数据
-            //低1位发送方，低2位接收方
-            // b[1] |= 0x04;
-            b[1] |= (Buffer.isBuffer(this.From) ? 0x01 : 0x00)
-            b[1] |= (Buffer.isBuffer(this.To) ? 0x02 : 0x00)
-            addr = Buffer.concat([
-                Buffer.isBuffer(this.From) ? this.From : Buffer.from(this.From),
-                Buffer.isBuffer(this.To) ? this.To : Buffer.from(this.To),
-            ]);
+        let data: any = '';
+        switch (this.Version) {
+            case 0:
+                //预留7个字节
+                b = Buffer.alloc(10)
+                b[0] = this.Version;
+                b[1] |= this.NeedReply ? 0x80 : 0x00
+                b[1] |= this.Status ? 0x40 : 0x00
+                //TODO 嵌入是否包含接收方和发送方地址数据，2位
+                b[2] = this.Type;
+                //写入超时单位
+                b[3] = this.TimeoutUnit;
+                //写入超时时间
+                b[4] = this.Timeout;
+
+                //写入seqID
+                // let b1 = Buffer.alloc(2);
+                b.writeUInt16LE(this.ID, 5);
+                // b1.copy(b, 5)
+                // b[2] |= this.IsUp ? 0x80 : 0x00;
+                b[7] = this.Path.length
+                b[8] = RPC.getDataType(this.Data);
+                //开始编码时间和请求类型数据
+                addr = Buffer.alloc(0);
+                if (RPC.NeedAddressType.includes(this.Type)) {
+                    //写入16字节的地址数据
+                    //低1位发送方，低2位接收方
+                    // b[1] |= 0x04;
+                    b[1] |= (Buffer.isBuffer(this.From) ? 0x01 : 0x00)
+                    b[1] |= (Buffer.isBuffer(this.To) ? 0x02 : 0x00)
+                    addr = Buffer.concat([
+                        Buffer.isBuffer(this.From) ? this.From : Buffer.from(this.From),
+                        Buffer.isBuffer(this.To) ? this.To : Buffer.from(this.To),
+                    ]);
+                }
+                // 需要标识数据类型用于做解码
+                data = RPC.encodeData(this.Data, b[8]);
+                return Buffer.concat([
+                    Buffer.from([0x68]),
+                    b,
+                    addr,
+                    Buffer.from(this.Path),
+                    undefined === data ? Buffer.alloc(0) : (Buffer.isBuffer(data) ? data : Buffer.from('string' == typeof data ? data : data.toString())),
+                    Buffer.from([0x68]),
+                ])
+                break;
+            case 1:
+                //预留7个字节
+                b = Buffer.alloc(11)
+                b[0] = this.Version;
+                b[1] |= this.NeedReply ? 0x80 : 0x00
+                b[1] |= this.Status ? 0x40 : 0x00
+                //TODO 嵌入是否包含接收方和发送方地址数据，2位
+                b[2] = this.Type;
+                //写入超时单位
+                b[3] = this.TimeoutUnit;
+                //写入超时时间
+                b[4] = this.Timeout;
+
+                //写入seqID
+                // let b1 = Buffer.alloc(2);
+                b.writeUInt16LE(this.ID, 5);
+                // b1.copy(b, 5)
+                // b[2] |= this.IsUp ? 0x80 : 0x00;
+                b[7] = this.Path.length
+                b[10] = RPC.getDataType(this.Data);
+                data = RPC.encodeData(this.Data, b[10]);
+                b.writeUInt16LE(data.length, 8)
+                //开始编码时间和请求类型数据
+                addr = Buffer.alloc(0);
+                if (RPC.NeedAddressType.includes(this.Type)) {
+                    //写入16字节的地址数据
+                    //低1位发送方，低2位接收方
+                    // b[1] |= 0x04;
+                    b[1] |= (Buffer.isBuffer(this.From) ? 0x01 : 0x00)
+                    b[1] |= (Buffer.isBuffer(this.To) ? 0x02 : 0x00)
+                    addr = Buffer.concat([
+                        Buffer.isBuffer(this.From) ? this.From : Buffer.from(this.From),
+                        Buffer.isBuffer(this.To) ? this.To : Buffer.from(this.To),
+                    ]);
+                }
+                // 需要标识数据类型用于做解码
+                let br: Buffer = Buffer.concat([
+                    b,
+                    addr,
+                    Buffer.from(this.Path),
+                    undefined === data ? Buffer.alloc(0) : (Buffer.isBuffer(data) ? data : Buffer.from('string' == typeof data ? data : data.toString())),
+                ])
+                return Buffer.concat([
+                    Buffer.from([0x68]),
+                    br,
+                    Buffer.from([checkSum(br)]),
+                    Buffer.from([0x68]),
+                ])
+                break;
         }
-        // 需要标识数据类型用于做解码
-        let data = RPC.encodeData(this.Data, b[8]);
-        return Buffer.concat([
-            Buffer.from([0x68]),
-            b,
-            addr,
-            Buffer.from(this.Path),
-            undefined === data ? Buffer.alloc(0) : (Buffer.isBuffer(data) ? data : Buffer.from('string' == typeof data ? data : data.toString())),
-            Buffer.from([0x68]),
-        ])
     }
     static getDataType(data: any): DataType {
         if (data instanceof Buffer) {
@@ -203,26 +259,69 @@ export class RPC {
     static decode(b: Buffer) {
         if (b[0] !== 0x68 || b[b.length - 1] !== 0x68) { throw 'ErrorPacket' }
         b = b.slice(1, b.length - 1)
-        let t = new RPC()
+        let t = new RPC(), start = 10;
         t.Version = b[0];
-        t.NeedReply = (b[1] & 0x80) == 0x80
-        t.Status = (b[1] & 0x40) == 0x40
-        t.Timeout = b[4];
-        t.TimeoutUnit = b[3];
-        t.ID = b.readUInt16LE(5);
-        t.Type = b[2]
-        let start = 10;
-        if (RPC.NeedAddressType.includes(t.Type)) {
-            t.From = (b[1] & 0x01) > 0 ? b.slice(start, start + 8) : b.slice(start, start + 8).toString().trim();
-            start += 8;
-            t.To = (b[1] & 0x02) > 0 ? b.slice(start, start + 8) : b.slice(start, start + 8).toString().trim();
-            start += 8;
-        }
-        //预留3个字节不处理
-        t.Path = b.slice(start, b[7] + start).toString()
-        t.Data = RPC.decodeData(b.slice(start + b[7]), b[8]);
+        switch (t.Version) {
+            case 0:
 
-        return t;
+                t.NeedReply = (b[1] & 0x80) == 0x80
+                t.Status = (b[1] & 0x40) == 0x40
+                t.Timeout = b[4];
+                t.TimeoutUnit = b[3];
+                t.ID = b.readUInt16LE(5);
+                t.Type = b[2]
+                start = 10;
+                if (RPC.NeedAddressType.includes(t.Type)) {
+                    t.From = (b[1] & 0x01) > 0 ? b.slice(start, start + 8) : b.slice(start, start + 8).toString().trim();
+                    start += 8;
+                    t.To = (b[1] & 0x02) > 0 ? b.slice(start, start + 8) : b.slice(start, start + 8).toString().trim();
+                    start += 8;
+                }
+                //预留3个字节不处理
+                t.Path = b.slice(start, b[7] + start).toString()
+                t.Data = RPC.decodeData(b.slice(start + b[7]), b[8]);
+
+                return t;
+                break;
+            case 1:
+
+                t.NeedReply = (b[1] & 0x80) == 0x80
+                t.Status = (b[1] & 0x40) == 0x40
+                t.Timeout = b[4];
+                t.TimeoutUnit = b[3];
+                t.ID = b.readUInt16LE(5);
+                t.Type = b[2]
+                start = 11;
+                if (RPC.NeedAddressType.includes(t.Type)) {
+                    t.From = (b[1] & 0x01) > 0 ? b.slice(start, start + 8) : b.slice(start, start + 8).toString().trim();
+                    start += 8;
+                    t.To = (b[1] & 0x02) > 0 ? b.slice(start, start + 8) : b.slice(start, start + 8).toString().trim();
+                    start += 8;
+                }
+                //预留3个字节不处理
+                t.Path = b.slice(start, b[7] + start).toString()
+                t.Data = RPC.decodeData(b.slice(start + b[7], start + b[7] + b.readUInt16LE(8)), b[10]);
+                let sum = checkSum(b.slice(0, start + b[7] + b.readUInt16LE(8)))
+                if (sum != b[start + b[7] + b.readUInt16LE(8)]) {
+                    throw new Error('校验错误')
+                }
+                return t;
+                break;
+        }
     }
 }
+/**
+ * 校验位计算
+ * @param b 
+ */
+function checkSum(b: Buffer) {
+    let sum = 0;
+    for (let x of b) {
+        sum += x;
+    }
+    return sum % 255;
+}
+// class RPCV1{
+//     encode()
+// }
 export default RPC;
