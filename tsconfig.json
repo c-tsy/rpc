@@ -8,6 +8,7 @@
         "experimentalDecorators": true,
         "removeComments": true,
         "preserveConstEnums": true,
+        "downlevelIteration": true,
         "lib": [
             "es2015",
             "es2017",

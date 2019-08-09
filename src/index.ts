@@ -325,3 +325,11 @@ function checkSum(b: Buffer) {
 //     encode()
 // }
 export default RPC;
+declare let window: any;
+try {
+    if (window) {
+        window.RPC = RPC;
+    }
+} catch (error) {
+
+}
