@@ -35,6 +35,8 @@ export enum RPCType {
     Sub,
     //取消订阅
     UnSub,
+    //心跳
+    Heart,
 }
 
 export enum DataType {
