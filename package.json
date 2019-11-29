@@ -1,6 +1,6 @@
 {
   "name": "@ctsy/rpc",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "main": "dist/index.js",
   "author": "CastleMY <490523604@qq.com>",
   "license": "MIT",
